@@ -1,15 +1,19 @@
 FROM ruby:3.1
 
-RUN mkdir /myapp
-WORKDIR /myapp
-COPY Gemfile /myapp/Gemfile
-COPY Gemfile.lock /myapp/Gemfile.lock
+RUN apt-get update && apt-get upgrade -y \
+      && apt-get install -y --no-install-recommends \
+  postgresql-client
+
+RUN mkdir /chat_app
+WORKDIR /chat_app
+COPY Gemfile /chat_app/Gemfile
+COPY Gemfile.lock /chat_app/Gemfile.lock
 
 RUN gem update --system
 RUN bundle update --bundler
 
 RUN bundle install
-COPY . /myapp
+COPY . /chat_app
 
 # Add a script to be executed every time the container starts.
 COPY entrypoint.sh /usr/bin/

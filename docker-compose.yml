@@ -1,26 +1,36 @@
 version: '3'
 services:
-  db:
-    image: postgres:14.2-alpine
-    container_name: myapp-postgres-14.2
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    command: "postgres -c 'max_connections=500'"
-    environment:
-      POSTGRES_DB: myappdb
-      POSTGRES_USER: my_user
-      POSTGRES_PASSWORD: ILoveDoingKnowBe4Training!
+  chat_redis:
+    image: redis
+    container_name: chat-redis
     ports:
-      - "5432:5432"
+      - 6379:6379
+    volumes:
+      - ./docker/data/redis:/data
 
-  web:
+  chat_db:
+    image: postgres:12.1
+    container_name: chat-db
+    ports:
+      - 5432:5432
+    volumes:
+      - ./docker/data/postgres:/var/lib/postgresql/data
+
+  chat_app:
     build: .
+    container_name: chat-app
     command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
     volumes:
-      - .:/myapp
+      - .:/chat_app
     ports:
-      - "3000:3000"
+      - 3000:3000
     depends_on:
-      - db
+      - chat_db
+    environment:
+      POSTGRESQL_HOST: chat_db
+      POSTGRESQL_USER: postgres
+      REDIS_HOST: chat_redis
+      REDIS_URL: redis://chat_redis:6379/
+
 volumes:
   postgres_data: {}
